@@ -17,6 +17,10 @@ def frontend():
     with open("frontend/index.html", "r", encoding="utf-8") as f:
         return f.read()
 
-@app.get("/")
-def home():
+@app.get("/health")
+def health():
     return {"status": "Backend running"}
+
+@app.get("/search")
+def search(brand: str = ""):
+    return search_products(brand)
