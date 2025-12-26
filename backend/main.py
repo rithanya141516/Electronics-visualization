@@ -10,6 +10,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/", response_class=HTMLResponse)
+def frontend():
+    with open("frontend/index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
 @app.get("/")
 def home():
     return {"status": "Backend running"}
