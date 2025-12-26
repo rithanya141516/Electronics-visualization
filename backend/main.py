@@ -1,7 +1,5 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from data_loader import search_products
 
 app = FastAPI()
 
@@ -12,14 +10,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/", response_class=HTMLResponse)
-def frontend():
-    with open("frontend/index.html", "r", encoding="utf-8") as f:
-        return f.read()
-
-@app.get("/search")
-def search(brand: str = ""):
-    data = search_products(brand)
-    return data   # always return list
-
-
+@app.get("/")
+def home():
+    return {"status": "Backend running"}
