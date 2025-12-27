@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Electronics Intelligence</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #f5f7fb;
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    .search-bar {
+      max-width: 800px;
+      margin: -30px auto 30px;
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      display: flex;
+      gap: 12px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      outline: none;
+    }
+
+    .search-bar button {
+      padding: 14px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: #4f46e5;
+      color: white;
+      transition: 0.2s ease;
+    }
+
+    .search-bar button:hover {
+      background: #4338ca;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 0 20px 40px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
+
+    .brand {
+      font-weight: 600;
+      font-size: 18px;
+      color: #4f46e5;
+      margin-bottom: 6px;
+    }
+
+    .model {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .price {
+      font-size: 20px;
+      font-weight: bold;
+      color: #16a34a;
+      margin-bottom: 10px;
+    }
+
+    .spec {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 40px;
+      color: #777;
+      font-size: 18px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 22px;
+      }
+      .search-bar {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Electronics Intelligence System</h1>
+  <p>Compare market price, specs & availability</p>
+</header>
+
+<div class="search-bar">
+  <input id="query" placeholder="Search brand (apple, samsung, oneplus...)" />
+  <button onclick="search()">Search</button>
+</div>
+
+<div class="container">
+  <div id="results" class="grid"></div>
+</div>
+
+<footer>
+  © 2025 Electronics Intelligence • Data-driven comparison
+</footer>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+async function search() {
+  const q = document.getElementById("query").value.trim();
+  const container = document.getElementById("results");
+
+  if (!q) {
+    container.innerHTML = `<div class="empty">Enter a brand to search</div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="empty">Loading...</div>`;
+
+  const res = await fetch(`${API}/search?brand=${q}`);
+  const json = await res.json();
+
+  const data = Array.isArray(json) ? json : json.data;
+
+  renderCards(data);
+}
+
+
+function renderCards(data) {
+  const container = document.getElementById("results");
+  container.innerHTML = "";
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `<div class="empty">No results found</div>`;
+    return;
+  }
+
+  // 🔥 SORT BY PRICE (DESC)
+  data.sort((a, b) => {
+    const priceA = parsePrice(a.price);
+    const priceB = parsePrice(b.price);
+    return priceB - priceA; // descending
+  });
+
+  data.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const summary = document.createElement("div");
+    summary.style.cursor = "pointer";
+
+    summary.innerHTML = `
+      <div class="brand">${item.brand || "Unknown Brand"}</div>
+      <div class="model">${item.model || ""}</div>
+      <div class="price">₹ ${item.price || "N/A"}</div>
+    `;
+
+    const details = document.createElement("div");
+    details.style.display = "none";
+    details.style.marginTop = "12px";
+    details.style.borderTop = "1px solid #eee";
+    details.style.paddingTop = "10px";
+
+    Object.keys(item).forEach(key => {
+      details.innerHTML += `
+        <div class="spec">
+          <strong>${formatKey(key)}:</strong> ${item[key] ?? "N/A"}
+        </div>
+      `;
+    });
+
+    summary.onclick = () => {
+      details.style.display =
+        details.style.display === "none" ? "block" : "none";
+    };
+
+    card.appendChild(summary);
+    card.appendChild(details);
+    container.appendChild(card);
+  });
+}
+
+// ✅ Safe price parser
+function parsePrice(price) {
+  if (!price) return 0;
+  return Number(
+    price.toString().replace(/[₹,]/g, "")
+  ) || 0;
+}
+
+function formatKey(key) {
+  return key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+</script>
